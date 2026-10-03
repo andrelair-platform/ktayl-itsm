@@ -25,6 +25,10 @@ RUN printf '%s\n' "${CA_CERT}" > /usr/local/share/ca-certificates/minicloud-ca.c
 # no-privilege-escalation policy (no_new_privs), so bind-80 fails. Move to the unprivileged 8080 so
 # GLPI runs fully non-root with allowPrivilegeEscalation:false + dropped caps. Service maps 80->8080.
 RUN sed -i 's/^Listen 80$/Listen 8080/' /etc/apache2/ports.conf \
-    && sed -i 's/<VirtualHost \*:80>/<VirtualHost *:8080>/' /etc/apache2/sites-available/000-default.conf
+    && sed -i 's/<VirtualHost \*:80>/<VirtualHost *:8080>/' /etc/apache2/sites-available/000-default.conf \
+    && setcap -r /usr/sbin/apache2 || true
+# ^ Strip apache's cap_net_bind_service FILE capability: under no_new_privs (allowPrivilegeEscalation:false)
+# the kernel REFUSES to exec a file-capability binary (EPERM, exit 126). On 8080 the cap is unneeded, so
+# removing it lets apache exec normally and bind the unprivileged port.
 
 USER www-data
