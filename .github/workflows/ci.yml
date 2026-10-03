@@ -91,6 +91,7 @@ jobs:
           exit-code: '1'
           severity: CRITICAL
           ignore-unfixed: true
+          trivyignores: .trivyignore
           timeout: 15m
 
       - name: Install Cosign
