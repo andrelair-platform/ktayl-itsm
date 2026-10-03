@@ -12,14 +12,12 @@ RUN apt-get update && apt-get upgrade -y --no-install-recommends \
     && apt-get install -y --no-install-recommends ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# minicloud CA injected at build time via --build-arg (CI passes the MINICLOUD_CA_CERT secret).
-# Raw PEM — never committed, never base64-decoded. GLPI (PHP) uses the OS trust store.
-ARG CA_CERT
-RUN printf '%s\n' "${CA_CERT}" > /usr/local/share/ca-certificates/minicloud-ca.crt \
+# minicloud CA via a BuildKit SECRET MOUNT (not a build-arg — build-args flatten the multiline PEM to
+# one line → invalid cert; a secret mount preserves it). update-ca-certificates then regenerates a
+# clean, canonical trust store (runtime cat/awk/openssl combine kept corrupting it → curl exit 77).
+RUN --mount=type=secret,id=ca_cert \
+    cp /run/secrets/ca_cert /usr/local/share/ca-certificates/minicloud-ca.crt \
     && update-ca-certificates
-# NOTE: CA trust is only exercised by the OIDC back-channel (S002). Verify it then with an in-pod
-# TLS probe to auth.devandre.sbs; if the build-arg flattened the PEM to one line, switch to a
-# BuildKit --secret mount (see feedback_ca_in_ci_image_gotcha_chain).
 
 # Apache binds 80 via a cap_net_bind_service FILE capability — negated under the cluster's
 # no-privilege-escalation policy (no_new_privs), so bind-80 fails. Move to the unprivileged 8080 so
