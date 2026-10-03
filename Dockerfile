@@ -28,4 +28,12 @@ RUN sed -i 's/^Listen 80$/Listen 8080/' /etc/apache2/ports.conf \
 # the kernel REFUSES to exec a file-capability binary (EPERM, exit 126). On 8080 the cap is unneeded, so
 # removing it lets apache exec normally and bind the unprivileged port.
 
+# GLPI SSO plugin (OAuth2/OIDC → Authentik). v1.4.0 = the GLPI-10.0.x line (v2.x needs GLPI 11).
+ARG SSO_PLUGIN_VERSION=v1.4.0
+RUN curl -fsSL -o /tmp/sso.tgz "https://github.com/edgardmessias/glpi-singlesignon/releases/download/${SSO_PLUGIN_VERSION}/singlesignon.tgz" \
+    && tar -xzf /tmp/sso.tgz -C /var/www/glpi/plugins/ \
+    && rm /tmp/sso.tgz \
+    && test -f /var/www/glpi/plugins/singlesignon/setup.php \
+    && chown -R www-data:www-data /var/www/glpi/plugins/singlesignon
+
 USER www-data
