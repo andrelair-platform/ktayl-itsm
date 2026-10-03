@@ -1,0 +1,13 @@
+# Triaged, accepted CVEs — reviewed, with justification. Everything else stays gated at CRITICAL.
+#
+# twig/twig 3.11.3 — vendored by GLPI 10.0.28 via its locked composer dependencies. GLPI pins this
+# version; we cannot bump it without forking GLPI's vendor tree (would break the app). Upstream fixes
+# land only when GLPI itself upgrades twig. Low exploitability here: these are template-engine issues
+# that require the ability to author/inject Twig templates, which in GLPI requires existing
+# authenticated admin access (SSO-gated, four-eyes). Re-evaluate on each GLPI version bump.
+CVE-2026-24425
+CVE-2026-46633
+CVE-2026-46634
+CVE-2026-48805
+CVE-2026-48806
+CVE-2026-48807
