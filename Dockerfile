@@ -21,4 +21,10 @@ RUN printf '%s\n' "${CA_CERT}" > /usr/local/share/ca-certificates/minicloud-ca.c
 # TLS probe to auth.devandre.sbs; if the build-arg flattened the PEM to one line, switch to a
 # BuildKit --secret mount (see feedback_ca_in_ci_image_gotcha_chain).
 
+# Apache binds 80 via a cap_net_bind_service FILE capability — negated under the cluster's
+# no-privilege-escalation policy (no_new_privs), so bind-80 fails. Move to the unprivileged 8080 so
+# GLPI runs fully non-root with allowPrivilegeEscalation:false + dropped caps. Service maps 80->8080.
+RUN sed -i 's/^Listen 80$/Listen 8080/' /etc/apache2/ports.conf \
+    && sed -i 's/<VirtualHost \*:80>/<VirtualHost *:8080>/' /etc/apache2/sites-available/000-default.conf
+
 USER www-data
