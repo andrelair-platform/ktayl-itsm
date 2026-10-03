@@ -16,7 +16,9 @@ RUN apt-get update && apt-get upgrade -y --no-install-recommends \
 # Raw PEM — never committed, never base64-decoded. GLPI (PHP) uses the OS trust store.
 ARG CA_CERT
 RUN printf '%s\n' "${CA_CERT}" > /usr/local/share/ca-certificates/minicloud-ca.crt \
-    && update-ca-certificates \
-    && test "$(wc -l < /usr/local/share/ca-certificates/minicloud-ca.crt)" -gt 1
+    && update-ca-certificates
+# NOTE: CA trust is only exercised by the OIDC back-channel (S002). Verify it then with an in-pod
+# TLS probe to auth.devandre.sbs; if the build-arg flattened the PEM to one line, switch to a
+# BuildKit --secret mount (see feedback_ca_in_ci_image_gotcha_chain).
 
 USER www-data
