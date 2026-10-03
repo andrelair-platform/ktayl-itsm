@@ -29,10 +29,15 @@ RUN sed -i 's/^Listen 80$/Listen 8080/' /etc/apache2/ports.conf \
 # removing it lets apache exec normally and bind the unprivileged port.
 
 # GLPI SSO plugin (OAuth2/OIDC → Authentik). v1.4.0 = the GLPI-10.0.x line (v2.x needs GLPI 11).
+# The v1.4.0 release asset is a bzip2 tarball `glpi-singlesignon-v1.4.0.tar.bz2` (the short
+# `singlesignon.tgz` name is only on the v2.x releases) → fetch that exact asset + `tar -xjf`.
+# The tarball extracts to `glpi-singlesignon/`, but GLPI requires the plugin directory to be named
+# EXACTLY after the plugin key (`singlesignon`) or it won't be discovered → rename after extraction.
 ARG SSO_PLUGIN_VERSION=v1.4.0
-RUN curl -fsSL -o /tmp/sso.tgz "https://github.com/edgardmessias/glpi-singlesignon/releases/download/${SSO_PLUGIN_VERSION}/singlesignon.tgz" \
-    && tar -xzf /tmp/sso.tgz -C /var/www/glpi/plugins/ \
-    && rm /tmp/sso.tgz \
+RUN curl -fsSL -o /tmp/sso.tar.bz2 "https://github.com/edgardmessias/glpi-singlesignon/releases/download/${SSO_PLUGIN_VERSION}/glpi-singlesignon-${SSO_PLUGIN_VERSION}.tar.bz2" \
+    && tar -xjf /tmp/sso.tar.bz2 -C /var/www/glpi/plugins/ \
+    && mv /var/www/glpi/plugins/glpi-singlesignon /var/www/glpi/plugins/singlesignon \
+    && rm /tmp/sso.tar.bz2 \
     && test -f /var/www/glpi/plugins/singlesignon/setup.php \
     && chown -R www-data:www-data /var/www/glpi/plugins/singlesignon
 
