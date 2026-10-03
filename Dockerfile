@@ -12,12 +12,11 @@ RUN apt-get update && apt-get upgrade -y --no-install-recommends \
     && apt-get install -y --no-install-recommends ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# minicloud CA via a BuildKit SECRET MOUNT (not a build-arg — build-args flatten the multiline PEM to
-# one line → invalid cert; a secret mount preserves it). update-ca-certificates then regenerates a
-# clean, canonical trust store (runtime cat/awk/openssl combine kept corrupting it → curl exit 77).
-RUN --mount=type=secret,id=ca_cert \
-    cp /run/secrets/ca_cert /usr/local/share/ca-certificates/minicloud-ca.crt \
-    && update-ca-certificates
+# NOTE: the minicloud CA is NOT baked here. The MINICLOUD_CA_CERT org secret is stored flattened
+# (body-less → a lone "-----BEGIN CERTIFICATE-----" → invalid cert that breaks curl's strict loader),
+# so baking it (build-arg OR secret mount) corrupts the trust store. Instead the minicloud CA is
+# injected at RUNTIME from the trust-manager `minicloud-ca-bundle` configmap via a CA-trust
+# initContainer in the wrapper chart (the known-good source). Base image trust store stays clean.
 
 # Apache binds 80 via a cap_net_bind_service FILE capability — negated under the cluster's
 # no-privilege-escalation policy (no_new_privs), so bind-80 fails. Move to the unprivileged 8080 so
